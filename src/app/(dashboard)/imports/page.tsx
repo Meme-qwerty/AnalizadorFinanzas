@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -57,6 +58,12 @@ export default function ImportsPage() {
       setResult(importResult)
       setStep('result')
       void refetch()
+      if (importResult.imported > 0) {
+        toast.success(`${importResult.imported} transacciones importadas`)
+      }
+      if (importResult.rejected > 0) {
+        toast.warning(`${importResult.rejected} filas con errores no fueron importadas`)
+      }
     } finally {
       setIsImporting(false)
     }
