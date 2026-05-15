@@ -11,6 +11,8 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { useThemeStore } from '@/store/theme.store'
+import { useAuthStore } from '@/store/auth.store'
+import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 function SettingsSection({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
@@ -43,11 +45,13 @@ function SettingRow({ label, description, children }: { label: string; descripti
 export default function SettingsPage() {
   const { privacyMode, togglePrivacyMode } = usePrivacyMode()
   const { theme, setTheme } = useThemeStore()
+  const { logout, user } = useAuthStore()
+  const router = useRouter()
   const [notifBudget, setNotifBudget] = useState(true)
   const [notifGoals, setNotifGoals] = useState(true)
   const [notifAnomalies, setNotifAnomalies] = useState(true)
   const [notifImports, setNotifImports] = useState(false)
-  const [displayName, setDisplayName] = useState('Benjamín Valdebenito')
+  const [displayName, setDisplayName] = useState(user?.name ?? '')
   const [saved, setSaved] = useState(false)
 
   const handleSaveProfile = () => {
@@ -75,7 +79,17 @@ export default function SettingsPage() {
         </div>
         <Separator />
         <SettingRow label="Correo electrónico" description="No se puede cambiar por ahora">
-          <Badge variant="secondary" className="text-xs font-mono">benjaminvaldebenito2003@gmail.com</Badge>
+          <Badge variant="secondary" className="text-xs font-mono">{user?.email}</Badge>
+        </SettingRow>
+        <Separator />
+        <SettingRow label="Cerrar sesión" description="Salir de tu cuenta en este dispositivo">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { logout(); router.replace('/login') }}
+          >
+            Cerrar sesión
+          </Button>
         </SettingRow>
       </SettingsSection>
 
