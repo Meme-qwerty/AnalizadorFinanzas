@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Pencil, Trash2, X, Tag } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   Table,
   TableBody,
@@ -28,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { useTransactions, useDeleteTransaction } from '@/hooks/useTransactions'
+import { useTransactions, useDeleteTransaction, useUpdateTransaction } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
 import { useAccounts } from '@/hooks/useAccounts'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
@@ -186,6 +187,7 @@ export default function TransactionTable({ filters, onEdit }: Props) {
   const { data: categories } = useCategories()
   const { data: accounts } = useAccounts()
   const deleteMutation = useDeleteTransaction()
+  const updateMutation = useUpdateTransaction()
   const { maskAmount } = usePrivacyMode()
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -229,6 +231,16 @@ export default function TransactionTable({ filters, onEdit }: Props) {
     setDeleteId(null)
   }
 
+  const bulkDelete = () => {
+    selected.forEach((id) => deleteMutation.mutate(id))
+    setSelected(new Set())
+  }
+
+  const bulkCategorize = (categoryId: string) => {
+    selected.forEach((id) => updateMutation.mutate({ id, categoryId }))
+    setSelected(new Set())
+  }
+
   if (isError) {
     return (
       <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
@@ -237,20 +249,59 @@ export default function TransactionTable({ filters, onEdit }: Props) {
     )
   }
 
-  const bulkBar = selected.size > 0 && (
-    <div className="flex items-center gap-3 px-1 py-2 text-sm">
-      <span className="text-muted-foreground">{selected.size} seleccionadas</span>
-      <Button
-        variant="destructive"
-        size="sm"
-        onClick={() => {
-          selected.forEach((id) => deleteMutation.mutate(id))
-          setSelected(new Set())
-        }}
-      >
-        Eliminar seleccionadas
-      </Button>
-    </div>
+  const bulkBar = (
+    <AnimatePresence>
+      {selected.size > 0 && (
+        <motion.div
+          key="bulk-bar"
+          initial={{ opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.18, ease: [0, 0, 0.2, 1] }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted border border-border text-sm"
+        >
+          <button
+            onClick={() => setSelected(new Set())}
+            className="text-muted-foreground hover:text-foreground transition-colors shrink-0"
+            aria-label="Deseleccionar todo"
+          >
+            <X className="size-4" />
+          </button>
+
+          <span className="flex-1 text-muted-foreground tabular-nums">
+            {selected.size} {selected.size === 1 ? 'seleccionada' : 'seleccionadas'}
+          </span>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-7 text-xs">
+                <Tag className="size-3.5 mr-1.5" />
+                Categorizar
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="max-h-64 overflow-y-auto">
+              {categories?.map((cat) => (
+                <DropdownMenuItem key={cat.id} onClick={() => bulkCategorize(cat.id)}>
+                  <span className="mr-2">{cat.icon}</span>
+                  {cat.name}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-7 text-xs"
+            onClick={bulkDelete}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="size-3.5 mr-1.5" />
+            Eliminar
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 
   const empty = (
