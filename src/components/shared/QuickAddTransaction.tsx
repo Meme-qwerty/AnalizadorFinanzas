@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Plus } from 'lucide-react'
@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useKeyboardShortcut } from '@/hooks/useKeyboardShortcut'
 import { useCreateTransaction } from '@/hooks/useTransactions'
 import { useCategories } from '@/hooks/useCategories'
+import { useAccounts } from '@/hooks/useAccounts'
 import { createTransactionSchema, type CreateTransactionFormData } from '@/lib/validators'
 import { cn } from '@/lib/utils'
 
@@ -28,6 +29,7 @@ export function QuickAddTransaction() {
   useKeyboardShortcut('n', toggle, { modifiers: ['ctrl'] })
 
   const { data: categories } = useCategories()
+  const { data: accounts } = useAccounts()
   const createTx = useCreateTransaction()
 
   const { register, handleSubmit, control, reset, watch, formState: { errors, isSubmitting } } =
@@ -37,10 +39,14 @@ export function QuickAddTransaction() {
         type: 'expense',
         occurredAt: new Date(),
         categoryId: '',
-        accountId: 'acc_1',
+        accountId: '',
         tags: [],
       },
     })
+
+  useEffect(() => {
+    if (accounts?.[0]) reset((prev) => ({ ...prev, accountId: accounts[0].id }))
+  }, [accounts, reset])
 
   const txType = watch('type')
 

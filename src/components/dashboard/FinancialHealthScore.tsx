@@ -40,7 +40,7 @@ function ScoreArc({ score }: { score: number }) {
   )
 }
 
-const scoreFactors = [
+const scoreFactors: { key: string; description: string }[] = [
   { key: 'Tasa de ahorro', description: 'Porcentaje del ingreso que ahorras' },
   { key: 'Presupuestos', description: 'Cumplimiento de límites' },
   { key: 'Diversificación', description: 'Variedad de categorías de gasto' },

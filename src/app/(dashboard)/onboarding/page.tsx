@@ -2,13 +2,15 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, ChevronRight, Wallet, Target, Tag, BarChart3 } from 'lucide-react'
+import { Check, ChevronRight, Wallet, Target, BarChart3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Progress } from '@/components/ui/progress'
 import { cn } from '@/lib/utils'
+import { useCreateAccount } from '@/hooks/useAccounts'
+import { useCreateBudget } from '@/hooks/useBudgets'
 
 interface Step {
   id: number
@@ -76,8 +78,20 @@ function WelcomeStep({ onNext }: { onNext: () => void }) {
 }
 
 function AccountStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
+  const createAccount = useCreateAccount()
   const [accountName, setAccountName] = useState('')
   const [balance, setBalance] = useState('')
+
+  const handleNext = async () => {
+    if (!accountName.trim()) return onNext()
+    await createAccount.mutateAsync({
+      name: accountName.trim(),
+      type: 'checking',
+      balance: Number(balance) || 0,
+      color: '#6B7280',
+    })
+    onNext()
+  }
 
   return (
     <div className="space-y-5">
@@ -97,16 +111,41 @@ function AccountStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => voi
       </div>
       <div className="flex gap-2">
         <Button variant="outline" className="flex-1" onClick={onSkip}>Saltar</Button>
-        <Button className="flex-1" onClick={onNext}>
-          Agregar <ChevronRight className="size-4 ml-1" />
+        <Button className="flex-1" onClick={handleNext} disabled={createAccount.isPending}>
+          {createAccount.isPending ? 'Guardando...' : 'Agregar'}
+          {!createAccount.isPending && <ChevronRight className="size-4 ml-1" />}
         </Button>
       </div>
     </div>
   )
 }
 
+const BUDGET_PRESETS = [
+  { icon: '🍔', label: 'Alimentación', amount: 200000, categoryId: 'cat_food' },
+  { icon: '🚗', label: 'Transporte', amount: 100000, categoryId: 'cat_transport' },
+  { icon: '🎮', label: 'Entretenimiento', amount: 60000, categoryId: 'cat_entertainment' },
+  { icon: '🛍️', label: 'Compras', amount: 150000, categoryId: 'cat_shopping' },
+]
+
 function BudgetStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void }) {
-  const [limit, setLimit] = useState('')
+  const createBudget = useCreateBudget()
+  const [selected, setSelected] = useState<typeof BUDGET_PRESETS[0] | null>(null)
+  const [customAmount, setCustomAmount] = useState('')
+
+  const handleNext = async () => {
+    const amount = customAmount ? Number(customAmount) : selected?.amount
+    if (!amount || amount <= 0) return onNext()
+
+    const now = new Date()
+    await createBudget.mutateAsync({
+      categoryId: selected?.categoryId ?? 'cat_food',
+      amount,
+      period: 'monthly',
+      startDate: new Date(now.getFullYear(), now.getMonth(), 1),
+      endDate: new Date(now.getFullYear(), now.getMonth() + 1, 0),
+    })
+    onNext()
+  }
 
   return (
     <div className="space-y-5">
@@ -115,18 +154,13 @@ function BudgetStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void
         <p className="text-sm text-muted-foreground">Define un límite mensual para empezar a controlar tus gastos.</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        {[
-          { icon: '🍔', label: 'Alimentación', amount: 200000 },
-          { icon: '🚗', label: 'Transporte', amount: 100000 },
-          { icon: '🎮', label: 'Entretenimiento', amount: 60000 },
-          { icon: '🛍️', label: 'Compras', amount: 150000 },
-        ].map((c) => (
+        {BUDGET_PRESETS.map((c) => (
           <button
             key={c.label}
-            onClick={() => setLimit(String(c.amount))}
+            onClick={() => { setSelected(c); setCustomAmount('') }}
             className={cn(
               'p-3 rounded-lg border text-left transition-colors',
-              limit === String(c.amount) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
+              selected?.categoryId === c.categoryId ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/40'
             )}
           >
             <div className="text-xl">{c.icon}</div>
@@ -137,12 +171,18 @@ function BudgetStep({ onNext, onSkip }: { onNext: () => void; onSkip: () => void
       </div>
       <div className="space-y-1.5">
         <Label>O ingresa un monto personalizado</Label>
-        <Input type="number" placeholder="Ej: 200000" value={limit} onChange={(e) => setLimit(e.target.value)} />
+        <Input
+          type="number"
+          placeholder="Ej: 200000"
+          value={customAmount}
+          onChange={(e) => { setCustomAmount(e.target.value); setSelected(null) }}
+        />
       </div>
       <div className="flex gap-2">
         <Button variant="outline" className="flex-1" onClick={onSkip}>Saltar</Button>
-        <Button className="flex-1" onClick={onNext}>
-          Crear presupuesto <ChevronRight className="size-4 ml-1" />
+        <Button className="flex-1" onClick={handleNext} disabled={createBudget.isPending}>
+          {createBudget.isPending ? 'Guardando...' : 'Crear presupuesto'}
+          {!createBudget.isPending && <ChevronRight className="size-4 ml-1" />}
         </Button>
       </div>
     </div>
