@@ -7,6 +7,7 @@ import { useDashboardSummary } from '@/hooks/useAnalytics'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { cn } from '@/lib/utils'
 import { formatPercentage } from '@/lib/formatters'
+import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
 
 interface SummaryCardProps {
   title: string
@@ -137,10 +138,12 @@ export default function SummaryCards() {
   ]
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
+    <StaggerList className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
       {cards.map((card) => (
-        <SummaryCard key={card.title} {...card} />
+        <StaggerItem key={card.title}>
+          <SummaryCard {...card} />
+        </StaggerItem>
       ))}
-    </div>
+    </StaggerList>
   )
 }

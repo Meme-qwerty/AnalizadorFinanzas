@@ -11,6 +11,7 @@ import {
 import BudgetCard from '@/components/budgets/BudgetCard'
 import BudgetForm from '@/components/budgets/BudgetForm'
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets'
+import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
 import { formatCLP } from '@/lib/formatters'
 import type { BudgetWithStats } from '@/types/budget.types'
 
@@ -51,16 +52,17 @@ export default function BudgetsPage() {
           <p className="text-sm text-muted-foreground mt-1">Crea límites de gasto por categoría</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {budgets.map((b) => (
-            <BudgetCard
-              key={b.id}
-              budget={b}
-              onEdit={(budget) => { setEditing(budget); setFormOpen(true) }}
-              onDelete={setDeleteId}
-            />
+            <StaggerItem key={b.id}>
+              <BudgetCard
+                budget={b}
+                onEdit={(budget) => { setEditing(budget); setFormOpen(true) }}
+                onDelete={setDeleteId}
+              />
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerList>
       )}
 
       <BudgetForm open={formOpen} onClose={() => { setFormOpen(false); setEditing(undefined) }} budget={editing} />

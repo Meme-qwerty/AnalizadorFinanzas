@@ -14,9 +14,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useGoals, useCreateGoal, useDeleteGoal, useAddContribution } from '@/hooks/useGoals'
+import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { createGoalSchema, type CreateGoalFormData } from '@/lib/validators'
-import { formatCLP, formatDate, formatPercentage } from '@/lib/formatters'
+import { formatDate, formatPercentage } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import type { Goal } from '@/types/goal.types'
 
@@ -194,16 +195,24 @@ export default function GoalsPage() {
       ) : (
         <div className="space-y-6">
           {active.length > 0 && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {active.map((g) => <GoalCard key={g.id} goal={g} onDelete={setDeleteId} />)}
-            </div>
+            <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {active.map((g) => (
+                <StaggerItem key={g.id}>
+                  <GoalCard goal={g} onDelete={setDeleteId} />
+                </StaggerItem>
+              ))}
+            </StaggerList>
           )}
           {completed.length > 0 && (
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-3">Metas completadas</p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {completed.map((g) => <GoalCard key={g.id} goal={g} onDelete={setDeleteId} />)}
-              </div>
+              <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {completed.map((g) => (
+                  <StaggerItem key={g.id}>
+                    <GoalCard goal={g} onDelete={setDeleteId} />
+                  </StaggerItem>
+                ))}
+              </StaggerList>
             </div>
           )}
           {!goals?.length && (

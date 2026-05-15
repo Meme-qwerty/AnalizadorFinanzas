@@ -34,6 +34,7 @@ import { useAccounts } from '@/hooks/useAccounts'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
 import type { Transaction, TransactionFilters } from '@/types/transaction.types'
 
 interface Props {
@@ -356,28 +357,31 @@ export default function TransactionTable({ filters, onEdit }: Props) {
       </div>
 
       {/* ── Mobile card list (< md) ──────────────────────────────── */}
-      <div className="md:hidden space-y-2">
+      <div className="md:hidden">
         {isLoading ? (
           <CardSkeleton />
         ) : !transactions?.length ? (
           empty
         ) : (
-          transactions.map((tx) => {
-            const cat = getCategoryInfo(tx.categoryId)
-            return (
-              <TransactionCard
-                key={tx.id}
-                tx={tx}
-                cat={cat}
-                accountName={getAccountName(tx.accountId)}
-                selected={selected.has(tx.id)}
-                masked={maskAmount(tx.amount)}
-                onToggle={() => toggleSelect(tx.id)}
-                onEdit={() => onEdit(tx)}
-                onDelete={() => setDeleteId(tx.id)}
-              />
-            )
-          })
+          <StaggerList className="space-y-2">
+            {transactions.map((tx) => {
+              const cat = getCategoryInfo(tx.categoryId)
+              return (
+                <StaggerItem key={tx.id}>
+                  <TransactionCard
+                    tx={tx}
+                    cat={cat}
+                    accountName={getAccountName(tx.accountId)}
+                    selected={selected.has(tx.id)}
+                    masked={maskAmount(tx.amount)}
+                    onToggle={() => toggleSelect(tx.id)}
+                    onEdit={() => onEdit(tx)}
+                    onDelete={() => setDeleteId(tx.id)}
+                  />
+                </StaggerItem>
+              )
+            })}
+          </StaggerList>
         )}
       </div>
 
