@@ -41,6 +41,14 @@ interface Props {
   onEdit: (transaction: Transaction) => void
 }
 
+interface CategoryInfo {
+  name: string
+  color: string
+  icon: string
+}
+
+// ─── Skeletons ───────────────────────────────────────────────────────────────
+
 function TableSkeleton() {
   return (
     <>
@@ -59,6 +67,116 @@ function TableSkeleton() {
   )
 }
 
+function CardSkeleton() {
+  return (
+    <div className="space-y-2.5">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl border border-border">
+          <Skeleton className="size-9 rounded-full shrink-0" />
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-3 w-2/5" />
+          </div>
+          <div className="text-right space-y-1.5 shrink-0">
+            <Skeleton className="h-4 w-20 ml-auto" />
+            <Skeleton className="h-3 w-14 ml-auto" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Mobile card ─────────────────────────────────────────────────────────────
+
+interface CardProps {
+  tx: Transaction
+  cat: CategoryInfo
+  accountName: string
+  selected: boolean
+  masked: string
+  onToggle: () => void
+  onEdit: () => void
+  onDelete: () => void
+}
+
+function TransactionCard({ tx, cat, accountName, selected, masked, onToggle, onEdit, onDelete }: CardProps) {
+  return (
+    <div
+      className={cn(
+        'flex items-start gap-3 p-3.5 rounded-xl border border-border transition-colors',
+        selected && 'bg-muted/40 border-muted-foreground/20'
+      )}
+    >
+      {/* Checkbox + category icon */}
+      <div className="flex flex-col items-center gap-2 shrink-0">
+        <Checkbox
+          checked={selected}
+          onCheckedChange={onToggle}
+          aria-label={`Seleccionar ${tx.descriptionClean}`}
+        />
+        <div
+          className="size-8 rounded-full flex items-center justify-center text-sm"
+          style={{ backgroundColor: `${cat.color}20` }}
+        >
+          {cat.icon}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-medium truncate leading-snug">{tx.descriptionClean}</p>
+          <span
+            className={cn(
+              'text-sm font-semibold tabular-nums shrink-0 leading-snug',
+              tx.type === 'income' ? 'text-income' : 'text-expense'
+            )}
+          >
+            {tx.type === 'income' ? '+' : '-'}{masked}
+          </span>
+        </div>
+
+        {tx.merchantName && (
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">{tx.merchantName}</p>
+        )}
+
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <Badge
+            variant="secondary"
+            className="text-xs gap-1 py-0"
+            style={{ backgroundColor: `${cat.color}18`, color: cat.color }}
+          >
+            {cat.name}
+          </Badge>
+          <span className="text-xs text-muted-foreground">{formatDate(tx.occurredAt)}</span>
+          <span className="text-xs text-muted-foreground">· {accountName}</span>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="size-7 shrink-0 -mr-1">
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            <Pencil className="size-3.5 mr-2" /> Editar
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem className="text-destructive" onClick={onDelete}>
+            <Trash2 className="size-3.5 mr-2" /> Eliminar
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function TransactionTable({ filters, onEdit }: Props) {
   const { data: transactions, isLoading, isError } = useTransactions(filters)
   const { data: categories } = useCategories()
@@ -72,7 +190,7 @@ export default function TransactionTable({ filters, onEdit }: Props) {
   const getAccountName = (accountId: string) =>
     accounts?.find((a) => a.id === accountId)?.name ?? accountId
 
-  const getCategoryInfo = (categoryId: string) => {
+  const getCategoryInfo = (categoryId: string): CategoryInfo => {
     const cat = categories?.find((c) => c.id === categoryId)
     return { name: cat?.name ?? '—', color: cat?.color ?? '#6B7280', icon: cat?.icon ?? '📦' }
   }
@@ -110,25 +228,34 @@ export default function TransactionTable({ filters, onEdit }: Props) {
 
   const allSelected = !!transactions?.length && selected.size === transactions.length
 
+  const bulkBar = selected.size > 0 && (
+    <div className="flex items-center gap-3 px-1 py-2 text-sm">
+      <span className="text-muted-foreground">{selected.size} seleccionadas</span>
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => {
+          selected.forEach((id) => deleteMutation.mutate(id))
+          setSelected(new Set())
+        }}
+      >
+        Eliminar seleccionadas
+      </Button>
+    </div>
+  )
+
+  const empty = (
+    <p className="text-center py-12 text-sm text-muted-foreground">
+      No hay transacciones que coincidan con los filtros.
+    </p>
+  )
+
   return (
     <>
-      {selected.size > 0 && (
-        <div className="flex items-center gap-3 px-1 py-2 text-sm">
-          <span className="text-muted-foreground">{selected.size} seleccionadas</span>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              selected.forEach((id) => deleteMutation.mutate(id))
-              setSelected(new Set())
-            }}
-          >
-            Eliminar seleccionadas
-          </Button>
-        </div>
-      )}
+      {bulkBar}
 
-      <div className="rounded-lg border border-border overflow-hidden">
+      {/* ── Desktop table (md+) ─────────────────────────────────── */}
+      <div className="hidden md:block rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 hover:bg-muted/50">
@@ -160,10 +287,7 @@ export default function TransactionTable({ filters, onEdit }: Props) {
               transactions.map((tx) => {
                 const cat = getCategoryInfo(tx.categoryId)
                 return (
-                  <TableRow
-                    key={tx.id}
-                    className={cn(selected.has(tx.id) && 'bg-muted/40')}
-                  >
+                  <TableRow key={tx.id} className={cn(selected.has(tx.id) && 'bg-muted/40')}>
                     <TableCell>
                       <Checkbox
                         checked={selected.has(tx.id)}
@@ -175,9 +299,7 @@ export default function TransactionTable({ filters, onEdit }: Props) {
                       {formatDate(tx.occurredAt)}
                     </TableCell>
                     <TableCell>
-                      <p className="text-sm font-medium truncate max-w-50">
-                        {tx.descriptionClean}
-                      </p>
+                      <p className="text-sm font-medium truncate max-w-50">{tx.descriptionClean}</p>
                       {tx.merchantName && (
                         <p className="text-xs text-muted-foreground">{tx.merchantName}</p>
                       )}
@@ -233,7 +355,33 @@ export default function TransactionTable({ filters, onEdit }: Props) {
         </Table>
       </div>
 
-      {/* Confirm delete dialog */}
+      {/* ── Mobile card list (< md) ──────────────────────────────── */}
+      <div className="md:hidden space-y-2">
+        {isLoading ? (
+          <CardSkeleton />
+        ) : !transactions?.length ? (
+          empty
+        ) : (
+          transactions.map((tx) => {
+            const cat = getCategoryInfo(tx.categoryId)
+            return (
+              <TransactionCard
+                key={tx.id}
+                tx={tx}
+                cat={cat}
+                accountName={getAccountName(tx.accountId)}
+                selected={selected.has(tx.id)}
+                masked={maskAmount(tx.amount)}
+                onToggle={() => toggleSelect(tx.id)}
+                onEdit={() => onEdit(tx)}
+                onDelete={() => setDeleteId(tx.id)}
+              />
+            )
+          })
+        )}
+      </div>
+
+      {/* ── Confirm delete dialog ────────────────────────────────── */}
       <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
