@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import {
   Table,
@@ -35,7 +35,10 @@ import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { formatDate } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
+import { Pagination } from '@/components/shared/Pagination'
 import type { Transaction, TransactionFilters } from '@/types/transaction.types'
+
+const PAGE_SIZE = 10
 
 interface Props {
   filters: TransactionFilters
@@ -187,6 +190,14 @@ export default function TransactionTable({ filters, onEdit }: Props) {
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [deleteId, setDeleteId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+
+  useEffect(() => { setPage(1) }, [filters])
+
+  const total = transactions?.length ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  const paginated = transactions?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) ?? []
+  const allSelected = !!paginated.length && selected.size === paginated.length
 
   const getAccountName = (accountId: string) =>
     accounts?.find((a) => a.id === accountId)?.name ?? accountId
@@ -205,11 +216,10 @@ export default function TransactionTable({ filters, onEdit }: Props) {
   }
 
   const toggleAll = () => {
-    if (!transactions) return
     setSelected(
-      selected.size === transactions.length
+      selected.size === paginated.length
         ? new Set()
-        : new Set(transactions.map((t) => t.id))
+        : new Set(paginated.map((t) => t.id))
     )
   }
 
@@ -226,8 +236,6 @@ export default function TransactionTable({ filters, onEdit }: Props) {
       </div>
     )
   }
-
-  const allSelected = !!transactions?.length && selected.size === transactions.length
 
   const bulkBar = selected.size > 0 && (
     <div className="flex items-center gap-3 px-1 py-2 text-sm">
@@ -278,14 +286,14 @@ export default function TransactionTable({ filters, onEdit }: Props) {
           <TableBody>
             {isLoading ? (
               <TableSkeleton />
-            ) : !transactions?.length ? (
+            ) : !paginated.length ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-12 text-muted-foreground text-sm">
                   No hay transacciones que coincidan con los filtros.
                 </TableCell>
               </TableRow>
             ) : (
-              transactions.map((tx) => {
+              paginated.map((tx) => {
                 const cat = getCategoryInfo(tx.categoryId)
                 return (
                   <TableRow key={tx.id} className={cn(selected.has(tx.id) && 'bg-muted/40')}>
@@ -360,11 +368,11 @@ export default function TransactionTable({ filters, onEdit }: Props) {
       <div className="md:hidden">
         {isLoading ? (
           <CardSkeleton />
-        ) : !transactions?.length ? (
+        ) : !paginated.length ? (
           empty
         ) : (
           <StaggerList className="space-y-2">
-            {transactions.map((tx) => {
+            {paginated.map((tx) => {
               const cat = getCategoryInfo(tx.categoryId)
               return (
                 <StaggerItem key={tx.id}>
@@ -384,6 +392,17 @@ export default function TransactionTable({ filters, onEdit }: Props) {
           </StaggerList>
         )}
       </div>
+
+      {/* ── Pagination ──────────────────────────────────────────── */}
+      {!isLoading && total > 0 && (
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          onChange={setPage}
+        />
+      )}
 
       {/* ── Confirm delete dialog ────────────────────────────────── */}
       <Dialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
