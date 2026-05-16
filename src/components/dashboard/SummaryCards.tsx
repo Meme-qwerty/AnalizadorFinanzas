@@ -14,11 +14,19 @@ interface SummaryCardProps {
   value: string
   subtitle?: string
   icon: React.ReactNode
-  trend?: 'up' | 'down' | 'neutral'
   accentClass?: string
+  change?: number
+  changePositiveIsGood?: boolean
+  prevMonthLabel?: string
 }
 
-function SummaryCard({ title, value, subtitle, icon, trend, accentClass }: SummaryCardProps) {
+function SummaryCard({ title, value, subtitle, icon, accentClass, change, changePositiveIsGood = true, prevMonthLabel }: SummaryCardProps) {
+  const showChange = change !== undefined && prevMonthLabel
+  const isGood = showChange ? (changePositiveIsGood ? change >= 0 : change <= 0) : false
+  const changeLabel = showChange
+    ? `${change > 0 ? '+' : ''}${change.toFixed(1)}%`
+    : ''
+
   return (
     <Card>
       <CardContent className="p-5">
@@ -38,10 +46,16 @@ function SummaryCard({ title, value, subtitle, icon, trend, accentClass }: Summa
             </div>
           </div>
         </div>
-        {trend && (
-          <div className="mt-3 flex items-center gap-1 text-xs">
-            {trend === 'up' && <TrendingUp className="size-3 text-income" />}
-            {trend === 'down' && <TrendingDown className="size-3 text-expense" />}
+
+        {showChange && (
+          <div className="mt-2.5 flex items-center gap-1.5">
+            {isGood
+              ? <TrendingUp className="size-3 shrink-0 text-income" />
+              : <TrendingDown className="size-3 shrink-0 text-expense" />}
+            <span className={cn('text-xs font-medium tabular-nums', isGood ? 'text-income' : 'text-expense')}>
+              {changeLabel}
+            </span>
+            <span className="text-xs text-muted-foreground">vs {prevMonthLabel}</span>
           </div>
         )}
       </CardContent>
@@ -90,6 +104,9 @@ export default function SummaryCards() {
     ? (data.monthlySavings / data.monthlyIncome) * 100
     : 0
 
+  const pct = (curr: number, prev: number) =>
+    prev > 0 ? ((curr - prev) / prev) * 100 : 0
+
   const cards: SummaryCardProps[] = [
     {
       title: 'Saldo total',
@@ -101,18 +118,20 @@ export default function SummaryCards() {
     {
       title: 'Ingresos del mes',
       value: maskAmount(data.monthlyIncome),
-      subtitle: 'Mayo 2026',
       icon: <TrendingUp className="size-5" />,
-      trend: 'up',
       accentClass: 'text-income',
+      change: pct(data.monthlyIncome, data.prevMonthlyIncome),
+      changePositiveIsGood: true,
+      prevMonthLabel: data.prevMonthLabel,
     },
     {
       title: 'Gastos del mes',
       value: maskAmount(data.monthlyExpenses),
-      subtitle: 'Mayo 2026',
       icon: <TrendingDown className="size-5" />,
-      trend: 'down',
       accentClass: 'text-expense',
+      change: pct(data.monthlyExpenses, data.prevMonthlyExpenses),
+      changePositiveIsGood: false,
+      prevMonthLabel: data.prevMonthLabel,
     },
     {
       title: 'Ahorro del mes',
@@ -120,6 +139,9 @@ export default function SummaryCards() {
       subtitle: `Tasa: ${formatPercentage(savingsRate)}`,
       icon: <ArrowUpDown className="size-5" />,
       accentClass: data.monthlySavings >= 0 ? 'text-income' : 'text-expense',
+      change: pct(data.monthlySavings, data.prevMonthlySavings),
+      changePositiveIsGood: true,
+      prevMonthLabel: data.prevMonthLabel,
     },
     {
       title: 'Presupuesto restante',

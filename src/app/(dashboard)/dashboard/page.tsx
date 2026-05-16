@@ -3,6 +3,7 @@ import SpendingChart from '@/components/dashboard/SpendingChart'
 import CashFlowChart from '@/components/dashboard/CashFlowChart'
 import RecentTransactions from '@/components/dashboard/RecentTransactions'
 import FinancialHealthScore from '@/components/dashboard/FinancialHealthScore'
+import WeeklySummary from '@/components/dashboard/WeeklySummary'
 
 export default function DashboardPage() {
   const now = new Date()
@@ -32,7 +33,10 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
           <RecentTransactions />
         </div>
-        <FinancialHealthScore />
+        <div className="flex flex-col gap-4">
+          <WeeklySummary />
+          <FinancialHealthScore />
+        </div>
       </div>
     </div>
   )

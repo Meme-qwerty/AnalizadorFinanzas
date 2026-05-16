@@ -36,6 +36,13 @@ export function useNetWorthHistory() {
   })
 }
 
+export function useWeeklySummary() {
+  return useQuery({
+    queryKey: ['analytics', 'weekly'],
+    queryFn: () => analyticsService.getWeeklySummary(),
+  })
+}
+
 export function useHealthScoreDetail() {
   return useQuery({
     queryKey: ['analytics', 'health-score'],

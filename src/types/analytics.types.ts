@@ -33,6 +33,23 @@ export interface DashboardSummary {
   monthlySavings: number
   budgetRemaining: number
   healthScore: number
+  prevMonthlyIncome: number
+  prevMonthlyExpenses: number
+  prevMonthlySavings: number
+  prevMonthLabel: string
+}
+
+export interface WeekDay {
+  label: string
+  current: number
+  previous: number
+}
+
+export interface WeeklySummary {
+  days: WeekDay[]
+  currentTotal: number
+  previousTotal: number
+  changePercent: number
 }
 
 export interface TopMerchant {

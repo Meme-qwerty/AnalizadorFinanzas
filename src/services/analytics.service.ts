@@ -1,4 +1,4 @@
-import type { MonthlyStats, CategoryStat, DashboardSummary, TopMerchant, NetWorthSnapshot, HealthScoreDetail } from '@/types/analytics.types'
+import type { MonthlyStats, CategoryStat, DashboardSummary, TopMerchant, NetWorthSnapshot, HealthScoreDetail, WeeklySummary } from '@/types/analytics.types'
 
 export const analyticsService = {
   async getDashboardSummary(): Promise<DashboardSummary> {
@@ -10,6 +10,10 @@ export const analyticsService = {
       monthlySavings: 712500,
       budgetRemaining: 312500,
       healthScore: 74,
+      prevMonthlyIncome: 1200000,
+      prevMonthlyExpenses: 498000,
+      prevMonthlySavings: 702000,
+      prevMonthLabel: 'abril',
     }
   },
 
@@ -60,6 +64,29 @@ export const analyticsService = {
       { month: 'Abr 2026', assets: 5380000, liabilities: 1060000, netWorth: 4320000 },
       { month: 'May 2026', assets: 5650000, liabilities: 1030000, netWorth: 4620000 },
     ]
+  },
+
+  async getWeeklySummary(): Promise<WeeklySummary> {
+    // TODO: return api.get('/analytics/weekly').then(r => r.data)
+    const days = [
+      { label: 'Lun', current: 38500,  previous: 45000 },
+      { label: 'Mar', current: 12000,  previous: 8500  },
+      { label: 'Mié', current: 22000,  previous: 22000 },
+      { label: 'Jue', current: 45000,  previous: 0     },
+      { label: 'Vie', current: 0,      previous: 35000 },
+      { label: 'Sáb', current: 9500,   previous: 18000 },
+      { label: 'Dom', current: 500,    previous: 17500 },
+    ]
+    const currentTotal  = days.reduce((s, d) => s + d.current,  0)
+    const previousTotal = days.reduce((s, d) => s + d.previous, 0)
+    return {
+      days,
+      currentTotal,
+      previousTotal,
+      changePercent: previousTotal > 0
+        ? ((currentTotal - previousTotal) / previousTotal) * 100
+        : 0,
+    }
   },
 
   async getHealthScoreDetail(): Promise<HealthScoreDetail> {
