@@ -219,6 +219,8 @@ export const transactionsService = {
     }
     if (filters?.minAmount !== undefined) result = result.filter((t) => t.amount >= filters.minAmount!)
     if (filters?.maxAmount !== undefined) result = result.filter((t) => t.amount <= filters.maxAmount!)
+    if (filters?.startDate) result = result.filter((t) => new Date(t.occurredAt) >= filters.startDate!)
+    if (filters?.endDate)   result = result.filter((t) => new Date(t.occurredAt) <= filters.endDate!)
     return result.sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
   },
 
