@@ -14,7 +14,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { useGoals, useCreateGoal, useDeleteGoal, useAddContribution } from '@/hooks/useGoals'
+import { useDashboardSummary } from '@/hooks/useAnalytics'
 import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
+import { GoalSimulator } from '@/components/goals/GoalSimulator'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { createGoalSchema, type CreateGoalFormData } from '@/lib/validators'
 import { formatDate, formatPercentage } from '@/lib/formatters'
@@ -169,6 +171,7 @@ function GoalFormModal({ open, onClose }: { open: boolean; onClose: () => void }
 
 export default function GoalsPage() {
   const { data: goals, isLoading } = useGoals()
+  const { data: summary } = useDashboardSummary()
   const deleteGoal = useDeleteGoal()
   const [formOpen, setFormOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<string | null>(null)
@@ -195,13 +198,19 @@ export default function GoalsPage() {
       ) : (
         <div className="space-y-6">
           {active.length > 0 && (
-            <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {active.map((g) => (
-                <StaggerItem key={g.id}>
-                  <GoalCard goal={g} onDelete={setDeleteId} />
-                </StaggerItem>
-              ))}
-            </StaggerList>
+            <>
+              <StaggerList className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {active.map((g) => (
+                  <StaggerItem key={g.id}>
+                    <GoalCard goal={g} onDelete={setDeleteId} />
+                  </StaggerItem>
+                ))}
+              </StaggerList>
+              <GoalSimulator
+                goals={active}
+                currentMonthlySavings={summary?.monthlySavings}
+              />
+            </>
           )}
           {completed.length > 0 && (
             <div>
