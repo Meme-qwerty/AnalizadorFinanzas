@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import BudgetCard from '@/components/budgets/BudgetCard'
 import BudgetForm from '@/components/budgets/BudgetForm'
+import { BudgetComparisonChart } from '@/components/budgets/BudgetComparisonChart'
 import { useBudgets, useDeleteBudget } from '@/hooks/useBudgets'
 import { StaggerList, StaggerItem } from '@/components/shared/StaggerList'
 import { formatCLP } from '@/lib/formatters'
@@ -40,6 +41,9 @@ export default function BudgetsPage() {
           <Plus className="size-4 mr-1.5" /> Nuevo presupuesto
         </Button>
       </div>
+
+      {/* Comparison chart */}
+      <BudgetComparisonChart budgets={budgets ?? []} isLoading={isLoading} />
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
