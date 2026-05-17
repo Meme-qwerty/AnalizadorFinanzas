@@ -22,6 +22,20 @@ export function useCategoryStats() {
   })
 }
 
+export function useTopExpenses() {
+  return useQuery({
+    queryKey: ['analytics', 'top-expenses'],
+    queryFn: () => analyticsService.getTopExpenses(),
+  })
+}
+
+export function useDayOfWeekStats() {
+  return useQuery({
+    queryKey: ['analytics', 'day-of-week'],
+    queryFn: () => analyticsService.getDayOfWeekStats(),
+  })
+}
+
 export function useTopMerchants() {
   return useQuery({
     queryKey: ['analytics', 'merchants'],

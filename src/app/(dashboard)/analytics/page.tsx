@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useMonthlyStats, useCategoryStats, useTopMerchants } from '@/hooks/useAnalytics'
+import { useMonthlyStats, useCategoryStats, useTopMerchants, useTopExpenses, useDayOfWeekStats } from '@/hooks/useAnalytics'
 import { usePrivacyMode } from '@/hooks/usePrivacyMode'
 import { formatCLP, formatPercentage } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -63,6 +63,8 @@ export default function AnalyticsPage() {
   const { data: monthly, isLoading: loadingMonthly } = useMonthlyStats(period)
   const { data: categories, isLoading: loadingCats } = useCategoryStats()
   const { data: merchants, isLoading: loadingMerchants } = useTopMerchants()
+  const { data: topExpenses, isLoading: loadingTopExpenses } = useTopExpenses()
+  const { data: dayStats, isLoading: loadingDayStats } = useDayOfWeekStats()
   const { maskAmount } = usePrivacyMode()
 
   const slicedMonthly = monthly?.slice(-period) ?? []
@@ -238,6 +240,99 @@ export default function AnalyticsPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Top expenses + Day-of-week row */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
+        {/* Top 5 gastos del mes */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Top 5 gastos del mes</CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loadingTopExpenses ? (
+              <div className="p-4 space-y-3">
+                {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {topExpenses?.map((e, i) => {
+                  const date = new Date(e.occurredAt).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+                  return (
+                    <div key={e.id} className="flex items-center gap-3 px-4 py-3">
+                      <span className="text-xs font-medium text-muted-foreground w-4 shrink-0">{i + 1}</span>
+                      <span
+                        className="size-7 rounded-lg flex items-center justify-center text-sm shrink-0"
+                        style={{ backgroundColor: `${e.categoryColor}20` }}
+                      >
+                        {e.categoryIcon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{e.description}</p>
+                        <p className="text-xs text-muted-foreground">{e.categoryName} · {date}</p>
+                      </div>
+                      <span className="text-sm font-semibold tabular-nums text-expense shrink-0">
+                        {maskAmount(e.amount)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Breakdown por día de la semana */}
+        <Card>
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">Gastos por día de la semana</CardTitle>
+              <span className="text-xs text-muted-foreground">este mes</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingDayStats ? (
+              <div className="space-y-3">
+                {Array.from({ length: 7 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton className="h-3 w-8 shrink-0" />
+                    <Skeleton className="h-5 flex-1 rounded-full" />
+                    <Skeleton className="h-3 w-16 shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2.5">
+                {dayStats?.map((d) => {
+                  const isPeak = d.amount === Math.max(...(dayStats.map((x) => x.amount)))
+                  return (
+                    <div key={d.day} className="flex items-center gap-3">
+                      <span className="text-xs text-muted-foreground w-7 shrink-0 font-medium">{d.shortDay}</span>
+                      <div className="flex-1 relative h-5 flex items-center">
+                        <div className="absolute inset-0 rounded-full bg-muted" />
+                        <div
+                          className={cn(
+                            'absolute left-0 top-0.5 bottom-0.5 rounded-full transition-all duration-700',
+                            isPeak ? 'bg-expense' : 'bg-primary/60'
+                          )}
+                          style={{ width: `${d.percentage}%` }}
+                        />
+                      </div>
+                      <div className="text-right shrink-0 w-28">
+                        <span className={cn('text-xs font-semibold tabular-nums', isPeak && 'text-expense')}>
+                          {maskAmount(d.amount)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground ml-1">({d.count} tx)</span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+      </div>
 
         </TabsContent>
       </Tabs>

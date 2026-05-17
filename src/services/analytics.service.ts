@@ -1,4 +1,4 @@
-import type { MonthlyStats, CategoryStat, DashboardSummary, TopMerchant, NetWorthSnapshot, HealthScoreDetail, WeeklySummary } from '@/types/analytics.types'
+import type { MonthlyStats, CategoryStat, DashboardSummary, TopMerchant, NetWorthSnapshot, HealthScoreDetail, WeeklySummary, TopExpense, DayOfWeekStat } from '@/types/analytics.types'
 
 export const analyticsService = {
   async getDashboardSummary(): Promise<DashboardSummary> {
@@ -38,6 +38,32 @@ export const analyticsService = {
       { categoryId: 'cat_housing', categoryName: 'Vivienda', categoryIcon: '🏠', categoryColor: '#8B5CF6', amount: 65000, percentage: 13.3, transactionCount: 3 },
       { categoryId: 'cat_other', categoryName: 'Otros', categoryIcon: '📦', categoryColor: '#6B7280', amount: 64500, percentage: 13.2, transactionCount: 8 },
     ]
+  },
+
+  async getTopExpenses(): Promise<TopExpense[]> {
+    // TODO: return api.get('/analytics/expenses/top').then(r => r.data)
+    return [
+      { id: 'e1', description: 'Zara', amount: 89900, categoryName: 'Ropa', categoryIcon: '🛍️', categoryColor: '#EC4899', occurredAt: '2026-05-03' },
+      { id: 'e2', description: 'Lider Supermercado', amount: 45000, categoryName: 'Alimentación', categoryIcon: '🍔', categoryColor: '#F97316', occurredAt: '2026-05-10' },
+      { id: 'e3', description: 'Copec Gasolina', amount: 38000, categoryName: 'Transporte', categoryIcon: '🚗', categoryColor: '#3B82F6', occurredAt: '2026-05-07' },
+      { id: 'e4', description: 'Arriendo mayo', amount: 35000, categoryName: 'Vivienda', categoryIcon: '🏠', categoryColor: '#8B5CF6', occurredAt: '2026-05-01' },
+      { id: 'e5', description: 'Lider Supermercado', amount: 32000, categoryName: 'Alimentación', categoryIcon: '🍔', categoryColor: '#F97316', occurredAt: '2026-05-15' },
+    ]
+  },
+
+  async getDayOfWeekStats(): Promise<DayOfWeekStat[]> {
+    // TODO: return api.get('/analytics/expenses/by-weekday').then(r => r.data)
+    const raw = [
+      { day: 'Lunes',     shortDay: 'Lun', amount:  52000, count:  8 },
+      { day: 'Martes',    shortDay: 'Mar', amount:  28500, count:  5 },
+      { day: 'Miércoles', shortDay: 'Mié', amount:  35000, count:  6 },
+      { day: 'Jueves',    shortDay: 'Jue', amount:  72000, count: 11 },
+      { day: 'Viernes',   shortDay: 'Vie', amount:  95000, count: 14 },
+      { day: 'Sábado',    shortDay: 'Sáb', amount: 118000, count: 18 },
+      { day: 'Domingo',   shortDay: 'Dom', amount:  41000, count:  7 },
+    ]
+    const total = raw.reduce((s, d) => s + d.amount, 0)
+    return raw.map((d) => ({ ...d, percentage: (d.amount / total) * 100 }))
   },
 
   async getTopMerchants(): Promise<TopMerchant[]> {

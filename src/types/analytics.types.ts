@@ -52,6 +52,24 @@ export interface WeeklySummary {
   changePercent: number
 }
 
+export interface TopExpense {
+  id: string
+  description: string
+  amount: number
+  categoryName: string
+  categoryIcon: string
+  categoryColor: string
+  occurredAt: string
+}
+
+export interface DayOfWeekStat {
+  day: string
+  shortDay: string
+  amount: number
+  count: number
+  percentage: number
+}
+
 export interface TopMerchant {
   name: string
   amount: number
